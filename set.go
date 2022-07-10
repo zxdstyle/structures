@@ -48,7 +48,7 @@ func (set *Set[V]) Iterator(f func(v V) bool) {
 // Add adds one or multiple items to the set.
 func (set *Set[V]) Add(items ...V) {
 	set.mu.Lock()
-	defer set.mu.RUnlock()
+	defer set.mu.Unlock()
 	if set.data == nil {
 		set.data = make(map[V]struct{})
 	}
