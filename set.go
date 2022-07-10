@@ -10,7 +10,7 @@ type Set[V comparable] struct {
 	data map[V]struct{}
 }
 
-// New create and returns a new set, which contains un-repeated items.
+// NewSet create and returns a new set, which contains un-repeated items.
 // The parameter `safe` is used to specify whether using set in concurrent-safety,
 // which is false in default.
 func NewSet[V comparable]() *Set[V] {
@@ -63,9 +63,6 @@ func (set *Set[V]) Add(items ...V) {
 //
 // Note that, if `item` is nil, it does nothing and returns false.
 func (set *Set[V]) AddIfNotExist(item V) bool {
-	if item == nil {
-		return false
-	}
 	if !set.Contains(item) {
 		set.mu.Lock()
 		defer set.mu.Unlock()
@@ -87,9 +84,6 @@ func (set *Set[V]) AddIfNotExist(item V) bool {
 // Note that, if `item` is nil, it does nothing and returns false. The function `f`
 // is executed without writing lock.
 func (set *Set[V]) AddIfNotExistFunc(item V, f func() bool) bool {
-	if item == nil {
-		return false
-	}
 	if !set.Contains(item) {
 		if f() {
 			set.mu.Lock()
@@ -113,9 +107,6 @@ func (set *Set[V]) AddIfNotExistFunc(item V, f func() bool) bool {
 // Note that, if `item` is nil, it does nothing and returns false. The function `f`
 // is executed within writing lock.
 func (set *Set[V]) AddIfNotExistFuncLock(item V, f func() bool) bool {
-	if item == nil {
-		return false
-	}
 	if !set.Contains(item) {
 		set.mu.Lock()
 		defer set.mu.Unlock()
@@ -342,14 +333,15 @@ func (set *Set[V]) Merge(others ...*Set[V]) *Set[V] {
 }
 
 // Pop randomly pops an item from set.
-func (set *Set[V]) Pop() V {
+func (set *Set[V]) Pop() (value V) {
 	set.mu.Lock()
 	defer set.mu.Unlock()
 	for k, _ := range set.data {
+		value = k
 		delete(set.data, k)
 		return k
 	}
-	return nil
+	return
 }
 
 // Pops randomly pops `size` items from set.

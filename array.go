@@ -17,10 +17,10 @@ type Array[V comparable] struct {
 	array []V
 }
 
-// New creates and returns an empty array.
+// NewArray creates and returns an empty array.
 // The parameter `safe` is used to specify whether using array in concurrent-safety,
 // which is false in default.
-func New[V comparable]() *Array[V] {
+func NewArray[V comparable]() *Array[V] {
 	return NewArraySize[V](0, 0)
 }
 
@@ -66,8 +66,9 @@ func (a *Array[V]) At(index int) (value V) {
 func (a *Array[V]) Get(index int) (value V, found bool) {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
+
 	if index < 0 || index >= len(a.array) {
-		return nil, false
+		return
 	}
 	return a.array[index], true
 }
@@ -153,7 +154,7 @@ func (a *Array[V]) Remove(index int) (value V, found bool) {
 // doRemoveWithoutLock removes an item by index without lock.
 func (a *Array[V]) doRemoveWithoutLock(index int) (value V, found bool) {
 	if index < 0 || index >= len(a.array) {
-		return nil, false
+		return
 	}
 	// Determine array boundaries when deleting to improve deletion efficiency.
 	if index == 0 {
@@ -231,7 +232,7 @@ func (a *Array[V]) PopLeft() (value V, found bool) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if len(a.array) == 0 {
-		return nil, false
+		return
 	}
 	value = a.array[0]
 	a.array = a.array[1:]
@@ -245,7 +246,7 @@ func (a *Array[V]) PopRight() (value V, found bool) {
 	defer a.mu.Unlock()
 	index := len(a.array) - 1
 	if index < 0 {
-		return nil, false
+		return
 	}
 	value = a.array[index]
 	a.array = a.array[:index]
@@ -541,7 +542,7 @@ func (a *Array[V]) Rand() (value V, found bool) {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 	if len(a.array) == 0 {
-		return nil, false
+		return
 	}
 	return a.array[rand.Intn(len(a.array))], true
 }
@@ -639,20 +640,6 @@ func (a *Array[V]) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	return nil
-}
-
-// FilterNil removes all nil value of the array.
-func (a *Array[V]) FilterNil() *Array[V] {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	for i := 0; i < len(a.array); {
-		if a.array[i] == nil {
-			a.array = append(a.array[:i], a.array[i+1:]...)
-		} else {
-			i++
-		}
-	}
-	return a
 }
 
 // Walk applies a user supplied function `f` to every item of array.
