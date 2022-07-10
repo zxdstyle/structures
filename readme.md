@@ -1,0 +1,1 @@
+Common Go generic structures
